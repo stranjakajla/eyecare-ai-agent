@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EyeCare Agent • Live Dashboard</title>
+
+  <style>
+    :root{
+      --bg0:#07141f;
+      --bg1:#0b1e2d;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.10);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.65);
+      --muted2: rgba(255,255,255,.45);
+      --accent:#57d6ff;
+      --good:#2fe6a8;
+      --warn:#ffcc66;
+      --bad:#ff6b6b;
+      --shadow: 0 16px 60px rgba(0,0,0,.55);
+      --radius: 22px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(900px 500px at 10% 0%, rgba(87,214,255,.18), transparent 60%),
+        radial-gradient(900px 600px at 90% 10%, rgba(47,230,168,.12), transparent 55%),
+        radial-gradient(900px 700px at 50% 100%, rgba(255,204,102,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      min-height:100vh;
+    }
+
+    .shell{
+      max-width: 1120px;
+      margin: 34px auto 80px;
+      padding: 0 18px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding: 18px 18px;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      min-width: 260px;
+    }
+    .logo{
+      width:44px;height:44px;border-radius:14px;
+      display:grid;place-items:center;
+      background: linear-gradient(180deg, rgba(87,214,255,.30), rgba(255,255,255,.06));
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      font-size:22px;
+    }
+    .brand h1{
+      margin:0;
+      font-size:22px;
+      letter-spacing:.2px;
+    }
+    .brand p{
+      margin:3px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .pill{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--stroke);
+      color: var(--muted);
+      font-size: 13px;
+      user-select:none;
+    }
+    .dot{
+      width:8px;height:8px;border-radius:50%;
+      background: var(--muted2);
+      box-shadow: 0 0 0 4px rgba(255,255,255,.05);
+    }
+    .dot.online{ background: var(--good); box-shadow: 0 0 0 4px rgba(47,230,168,.14); }
+    .dot.offline{ background: var(--bad); box-shadow: 0 0 0 4px rgba(255,107,107,.14); }
+
+    button{
+      border:0;
+      cursor:pointer;
+      color: var(--text);
+      background: rgba(255,255,255,.08);
+      border: 1px solid var(--stroke);
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing:.2px;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
+    }
+    button:hover{ background: rgba(255,255,255,.11); }
+    button:active{ transform: translateY(1px); }
+    button:disabled{ opacity:.45; cursor:not-allowed; }
+
+    .grid{
+      margin-top: 18px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .card{
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      padding: 18px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .card h2{
+      margin:0 0 12px;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+
+    .muted{ color: var(--muted); }
+    .tiny{ font-size: 12px; color: var(--muted2); }
+
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .big{
+      font-size: 52px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -1px;
+      margin: 10px 0 6px;
+    }
+
+    .bar{
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+    }
+    .bar > i{
+      display:block;
+      height:100%;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(47,230,168,.9), rgba(87,214,255,.9));
+      border-radius: 999px;
+    }
+
+    .subgrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .mini{
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .mini .label{ font-size: 12px; color: var(--muted); }
+    .mini .value{ margin-top: 6px; font-size: 16px; font-weight: 800; }
+
+    .badge{
+      position:absolute;
+      top:14px; right:14px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .time-badge{
+      display:inline-block;
+      padding: 6px 12px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+      font-size: 18px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.5px;
+      color: var(--text);
+    }
+
+    .cta{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 14px;
+    }
+    .btnNature{ border-color: rgba(47,230,168,.25); }
+    .btnEx{ border-color: rgba(87,214,255,.25); }
+    .btnIgnore{ border-color: rgba(255,255,255,.18); }
+
+    .prefRow{
+      display:grid;
+      grid-template-columns: 120px 1fr 60px;
+      gap:10px;
+      align-items:center;
+      margin: 12px 0;
+    }
+
+    .timeline{
+      margin-top: 16px;
+      grid-column: 1 / -1;
+    }
+
+    .timelineList{
+      margin-top: 10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      max-height: 320px;
+      overflow:auto;
+      padding-right: 6px;
+    }
+
+    .event{
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .event .left{
+      display:flex;
+      align-items:flex-start;
+      gap: 10px;
+      min-width: 0;
+    }
+    .event .statusDot{
+      width:10px;height:10px;border-radius:50%;
+      margin-top: 4px;
+      background: var(--good);
+      box-shadow: 0 0 0 4px rgba(47,230,168,.14);
+      flex:0 0 auto;
+    }
+    .event .title{
+      font-weight: 800;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .event .meta{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    .event .time{
+      font-size: 12px;
+      color: var(--muted);
+      flex:0 0 auto;
+    }
+
+    .footer{
+      margin-top: 10px;
+      color: var(--muted2);
+      font-size: 12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.12);
+      padding: 4px 8px;
+      border-radius: 10px;
+    }
+
+    /* Modal */
+    .modalBackdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      place-items:center;
+      padding: 18px;
+      z-index:999;
+    }
+    .modal{
+      width: min(720px, 100%);
+      border-radius: 26px;
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      overflow:hidden;
+    }
+    .modalHeader{
+      padding: 16px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    .modalHeader h3{
+      margin:0;
+      font-size: 16px;
+      letter-spacing:.2px;
+    }
+    .modalBody{ padding: 16px 18px 18px; }
+    .exList{
+      display:grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .exItem{
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .exItem .name{ font-weight: 900; }
+    .exItem .desc{ margin-top: 4px; color: var(--muted); font-size: 13px; line-height:1.35; }
+    .modalActions{
+      margin-top: 14px;
+      display:flex;
+      justify-content:flex-end;
+      gap: 10px;
+      flex-wrap:wrap;
+    }
+    .primary{
+      background: rgba(87,214,255,.18);
+      border-color: rgba(87,214,255,.28);
+    }
+    .primary:hover{ background: rgba(87,214,255,.22); }
+
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+      .timeline{ grid-column: auto; }
+      .subgrid{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">👁️</div>
+        <div>
+          <h1>EyeCare Agent</h1>
+          <p>Live dashboard (simulation + learning)</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <div class="pill" title="Backend status">
+          <span id="statusDot" class="dot offline"></span>
+          <span id="statusText">Offline</span>
+        </div>
+
+        <button id="btnNotif" title="Klikni da dopustiš obavijesti kad trebaš pauzu">
+          Dopusti obavijesti
+        </button>
+
+        <button id="btnRefresh">Osvježi</button>
+      </div>
+    </div>
+
+    <div id="notifHint" class="card" style="margin-bottom:16px; padding:12px 18px; background: rgba(87,214,255,.12); border: 1px solid rgba(87,214,255,.3); display:none;">
+      <strong>Obavijesti u browseru:</strong> da dobijaš obavijest kad trebaš pauzu, klikni gore <strong>„Dopusti obavijesti”</strong> i u prozoru browsera odaberi <strong>Dozvoli</strong>.
+    </div>
+
+    <!-- Vidljiva obavijest u desnom uglu kad je strain >= 40 i dugmad dostupna (radi i bez dozvole za browser notifikacije) -->
+    <div id="toastOffer" style="display:none; position:fixed; bottom:24px; right:24px; max-width:360px; padding:16px 20px; background: linear-gradient(135deg, rgba(255,204,102,.95), rgba(255,180,80,.95)); color:#1a1a1a; border-radius:16px; box-shadow: 0 10px 40px rgba(0,0,0,.4); z-index:9999; font-weight:600; border: 2px solid rgba(255,255,255,.5);">
+      <div style="font-size:15px; margin-bottom:6px;">👀 Trebaš pauzu!</div>
+      <div style="font-size:13px; opacity:.9;">Naprezanje očiju: <span id="toastStrain">0</span>. Odaberi Priroda, Vježbe ili Ignore ispod.</div>
+    </div>
+
+    <div class="grid">
+      <!-- Current State -->
+      <div class="card">
+        <div class="row" style="flex-wrap:wrap; gap:10px; align-items:center;">
+          <h2 style="margin:0;">Current State</h2>
+          <span class="time-badge" id="timeBadge">--:--</span>
+        </div>
+        <div class="muted" style="margin-top:6px; font-size:12px;">Trenutno vrijeme (simulacija)</div>
+
+        <div class="muted" style="margin-top:10px;">EyeStrainLevel</div>
+        <div class="big" id="strainValue">0</div>
+        <div class="bar" aria-label="Eye strain progress">
+          <i id="strainBar"></i>
+        </div>
+
+        <div style="margin-top:10px;" class="row">
+          <div class="muted">Comfortable</div>
+          <div id="comfortFlag" style="font-weight:800;">✅</div>
+        </div>
+
+        <div class="subgrid">
+          <div class="mini">
+            <div class="label">Mode</div>
+            <div class="value" id="modeValue">Simulation</div>
+          </div>
+          <div class="mini">
+            <div class="label">Pending Offer</div>
+            <div class="value" id="offerValue">None</div>
+          </div>
+          <div class="mini">
+            <div class="label">Learning</div>
+            <div class="value">Enabled</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent Suggestion -->
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0;">Agent Suggestion</h2>
+          <div class="badge" id="actionBadge">NO_WORK</div>
+        </div>
+
+        <p class="muted" id="suggestionText" style="margin:10px 0 0;">
+          No suggestion right now. Keep working.
+        </p>
+
+        <div class="cta">
+          <button class="btnNature" id="btnNature" disabled>🌿 Nature break</button>
+          <button class="btnEx" id="btnExercises" disabled>🧘 Exercises</button>
+          <button class="btnIgnore" id="btnIgnore" disabled>🙈 Ignore</button>
+        </div>
+
+        <div class="tiny" style="margin-top:12px; padding:10px; background: rgba(255,255,255,.06); border-radius:10px;">
+         
+        </div>
+      </div>
+
+      <!-- Learned Preferences -->
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0;">Learned Preferences</h2>
+          <div class="muted" style="font-size:13px;">weights</div>
+        </div>
+
+        <div class="prefRow">
+          <div>🌿 Nature</div>
+          <div class="bar"><i id="prefNature"></i></div>
+          <div style="text-align:right;font-weight:900;" id="prefNatureVal">0.33</div>
+        </div>
+
+        <div class="prefRow">
+          <div>🧘 Exercises</div>
+          <div class="bar"><i id="prefExercises"></i></div>
+          <div style="text-align:right;font-weight:900;" id="prefExercisesVal">0.33</div>
+        </div>
+
+        <div class="prefRow">
+          <div>🙈 Ignore</div>
+          <div class="bar"><i id="prefIgnore"></i></div>
+          <div style="text-align:right;font-weight:900;" id="prefIgnoreVal">0.34</div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="card timeline">
+        <div class="row">
+          <h2 style="margin:0;">Timeline</h2>
+          <div class="muted" style="font-size:13px;">last 30 events</div>
+        </div>
+
+        <div class="timelineList" id="timelineList"></div>
+
+        <div class="footer">
+        
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercises Modal -->
+  <div class="modalBackdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="modalHeader">
+        <h3>🧘 Eye Exercises (non-medical)</h3>
+        <button id="btnCloseModal">Close</button>
+      </div>
+      <div class="modalBody">
+        <div class="muted">
+          Izaberi vježbu, uradi je 1–2 minute. Kad završiš klikni <b>Done</b> (to šalje agentu odgovor “exercises”).
+        </div>
+
+        <div class="exList">
+          <div class="exItem">
+            <div class="name">1) 20–20–20 pravilo</div>
+            <div class="desc">Svakih 20 minuta pogledaj 20 sekundi u nešto udaljeno ~6m. Opušta fokus.</div>
+          </div>
+          <div class="exItem">
+            <div class="name">2) Fokus blizu → daleko</div>
+            <div class="desc">Gledaj prst 10 cm od nosa 10s, pa prebaci pogled u daljinu 10s. Ponovi 6×.</div>
+          </div>
+          <div class="exItem">
+            <div class="name">3) Kontrolisano treptanje</div>
+            <div class="desc">Polako trepni 10×. Pomaže suhoći očiju tokom rada.</div>
+          </div>
+        </div>
+
+        <div class="modalActions">
+          <button id="btnDoneExercises" class="primary">Done ✅ (send “exercises”)</button>
+          <button id="btnIgnoreFromModal">Skip 🙈 (send “ignore”)</button>
+        </div>
+
+        <div class="tiny" style="margin-top:10px;">
+          *Ovo nisu medicinski savjeti — samo jednostavne digitalne navike.*
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:4000";
+
+    // UI refs
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+    const btnRefresh = document.getElementById("btnRefresh");
+    const btnNotif = document.getElementById("btnNotif");
+
+    const timeBadge = document.getElementById("timeBadge");
+    const strainValue = document.getElementById("strainValue");
+    const strainBar = document.getElementById("strainBar");
+    const comfortFlag = document.getElementById("comfortFlag");
+    const modeValue = document.getElementById("modeValue");
+    const offerValue = document.getElementById("offerValue");
+
+    const actionBadge = document.getElementById("actionBadge");
+    const suggestionText = document.getElementById("suggestionText");
+
+    const btnNature = document.getElementById("btnNature");
+    const btnExercises = document.getElementById("btnExercises");
+    const btnIgnore = document.getElementById("btnIgnore");
+
+    const prefNature = document.getElementById("prefNature");
+    const prefExercises = document.getElementById("prefExercises");
+    const prefIgnore = document.getElementById("prefIgnore");
+    const prefNatureVal = document.getElementById("prefNatureVal");
+    const prefExercisesVal = document.getElementById("prefExercisesVal");
+    const prefIgnoreVal = document.getElementById("prefIgnoreVal");
+
+    const timelineList = document.getElementById("timelineList");
+
+    // Modal refs
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const btnCloseModal = document.getElementById("btnCloseModal");
+    const btnDoneExercises = document.getElementById("btnDoneExercises");
+    const btnIgnoreFromModal = document.getElementById("btnIgnoreFromModal");
+
+    // State
+    let lastState = null;
+
+    // Notifikacije: ponovno pošalji svakih 8 s dok je ponuda aktivna (strain >= 40, dugmad dostupna)
+    let lastNotifiedKey = null;
+    let lastNotifiedTime = 0;
+
+    function setOnline(isOnline){
+      statusDot.classList.toggle("online", isOnline);
+      statusDot.classList.toggle("offline", !isOnline);
+      statusText.textContent = isOnline ? "Online" : "Offline";
+    }
+
+    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+    function openModal(){
+      modalBackdrop.style.display = "grid";
+      modalBackdrop.setAttribute("aria-hidden", "false");
+    }
+    function closeModal(){
+      modalBackdrop.style.display = "none";
+      modalBackdrop.setAttribute("aria-hidden", "true");
+    }
+
+    async function requestNotifications(){
+      if (!("Notification" in window)) {
+        alert("Tvoj browser ne podržava Notification API.");
+        return;
+      }
+      const perm = await Notification.requestPermission();
+      btnNotif.textContent = (perm === "granted") ? "Notifications enabled" : "Enable notifications";
+      return perm;
+    }
+
+    function maybeNotify(state){
+      const offer = state?.pendingOffer;
+      const strain = Number(state?.eyeStrainLevel ?? 0);
+      const hasOffer = !!offer && strain >= 40;
+
+      if (!hasOffer) {
+        lastNotifiedKey = null;
+        lastNotifiedTime = 0;
+        return;
+      }
+
+      const key = `${state.time}|${offer.message || ""}|${(offer.options||[]).join(",")}`;
+      const now = Date.now();
+      const cooldownMs = 8000;
+      // Samo in-page toast (bez browser popup prozora) – toast se prikazuje u render()
+      lastNotifiedKey = key;
+      lastNotifiedTime = now;
+    }
+
+    function updateNotifButtonLabel(){
+      const hint = document.getElementById("notifHint");
+      if (!("Notification" in window)) {
+        btnNotif.textContent = "Obavijesti nisu podržane";
+        btnNotif.disabled = true;
+        if (hint) hint.style.display = "none";
+        return;
+      }
+      if (Notification.permission === "granted") {
+        btnNotif.textContent = "Obavijesti uključene ✓";
+        btnNotif.disabled = false;
+        if (hint) hint.style.display = "none";
+      } else if (Notification.permission === "denied") {
+        btnNotif.textContent = "Obavijesti blokirane";
+        btnNotif.disabled = true;
+        if (hint) hint.style.display = "none";
+      } else {
+        btnNotif.textContent = "Dopusti obavijesti (klikni ovdje)";
+        btnNotif.disabled = false;
+        if (hint) hint.style.display = "block";
+      }
+    }
+
+    async function fetchState(){
+      try{
+        const res = await fetch(`${API_BASE}/api/state`, { cache: "no-store" });
+        if (!res.ok) throw new Error("Bad status " + res.status);
+        const data = await res.json();
+        setOnline(true);
+        lastState = data;
+        render(data);
+        maybeNotify(data);
+      }catch(e){
+        setOnline(false);
+      }
+    }
+
+    function render(state){
+      // Time + strain
+      timeBadge.textContent = state.time ?? "--:--";
+      const strain = Number(state.eyeStrainLevel ?? 0);
+      strainValue.textContent = String(strain);
+      strainBar.style.width = `${clamp(strain, 0, 100)}%`;
+      comfortFlag.textContent = (strain < 35) ? "✅" : (strain < 70 ? "⚠️" : "❌");
+
+      // Mode & pending offer
+      modeValue.textContent = "Simulation";
+      offerValue.textContent = state.pendingOffer ? "Active" : "None";
+
+      // Toast u desnom uglu kad je strain >= 40 i dugmad dostupna
+      const toastEl = document.getElementById("toastOffer");
+      const toastStrainEl = document.getElementById("toastStrain");
+      if (toastEl && toastStrainEl) {
+        const showToast = !!state.pendingOffer && strain >= 40;
+        toastEl.style.display = showToast ? "block" : "none";
+        if (showToast) toastStrainEl.textContent = String(strain);
+      }
+
+      // Suggestion
+      const last = (state.history && state.history.length) ? state.history[state.history.length - 1] : null;
+      const action = last?.action || (state.pendingOffer ? "OFFER_BREAK" : "NO_WORK");
+      actionBadge.textContent = action;
+
+      if (state.pendingOffer){
+        suggestionText.textContent = state.pendingOffer.message || "Would you like a short break?";
+      } else {
+        suggestionText.textContent = "No suggestion right now. Keep working.";
+      }
+
+      // Buttons enabled/disabled
+      const options = state.pendingOffer?.options || [];
+      const hasOffer = !!state.pendingOffer;
+
+      btnNature.disabled = !(hasOffer && options.includes("nature"));
+      btnExercises.disabled = !(hasOffer && options.includes("exercises"));
+      btnIgnore.disabled = !hasOffer;
+
+      // Preferences bars
+      const p = state.preferences || { nature: 0.33, exercises: 0.33, ignore: 0.34 };
+      const n = Number(p.nature ?? 0);
+      const ex = Number(p.exercises ?? 0);
+      const ig = Number(p.ignore ?? 0);
+
+      prefNature.style.width = `${clamp(n*100, 0, 100)}%`;
+      prefExercises.style.width = `${clamp(ex*100, 0, 100)}%`;
+      prefIgnore.style.width = `${clamp(ig*100, 0, 100)}%`;
+
+      prefNatureVal.textContent = n.toFixed(2);
+      prefExercisesVal.textContent = ex.toFixed(2);
+      prefIgnoreVal.textContent = ig.toFixed(2);
+
+      // Timeline
+      timelineList.innerHTML = "";
+      const items = (state.history || []).slice().reverse(); // newest on top
+      if (!items.length){
+        timelineList.innerHTML = `<div class="muted">No events yet.</div>`;
+        return;
+      }
+
+      for (const ev of items){
+        const title = ev.action || "NO_WORK";
+        const t = (ev.time && ev.time.length <= 5) ? ev.time : (state.time ?? "--:--");
+        const strainEv = (ev.eyeStrainLevel ?? strain);
+        const resp = (ev.userResponse && ev.userResponse !== "NO_WORK") ? ev.userResponse : "—";
+
+        const el = document.createElement("div");
+        el.className = "event";
+        el.innerHTML = `
+          <div class="left">
+            <span class="statusDot"></span>
+            <div style="min-width:0;">
+              <div class="title">${title}</div>
+              <div class="meta">strain: ${strainEv} • response: ${resp}</div>
+            </div>
+          </div>
+          <div class="time">${t}</div>
+        `;
+        timelineList.appendChild(el);
+      }
+    }
+
+    async function sendResponse(response){
+      try{
+        await fetch(`${API_BASE}/api/respond`, {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ response })
+        });
+        // odmah refresh UI
+        await fetchState();
+      }catch(e){
+        alert("Ne mogu poslati odgovor. Provjeri da backend radi na localhost:4000");
+      }
+    }
+
+    // Button handlers
+    btnRefresh.addEventListener("click", fetchState);
+
+    btnNotif.addEventListener("click", async () => {
+      const perm = await requestNotifications();
+      updateNotifButtonLabel();
+    });
+
+    btnNature.addEventListener("click", () => sendResponse("nature"));
+
+    // Exercises: otvori modal (a response šaljemo tek kad klikne Done)
+    btnExercises.addEventListener("click", () => openModal());
+
+    btnIgnore.addEventListener("click", () => sendResponse("ignore"));
+
+    btnCloseModal.addEventListener("click", closeModal);
+    modalBackdrop.addEventListener("click", (e) => {
+      if (e.target === modalBackdrop) closeModal();
+    });
+
+    btnDoneExercises.addEventListener("click", async () => {
+      closeModal();
+      await sendResponse("exercises");
+    });
+
+    btnIgnoreFromModal.addEventListener("click", async () => {
+      closeModal();
+      await sendResponse("ignore");
+    });
+
+    // Auto polling
+    (async function init(){
+      updateNotifButtonLabel();
+
+      await fetchState();
+      setInterval(fetchState, 1000);
+    })();
+  </script>
+</body>
+</html>
